@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+import fs from 'node:fs';
 import { Octokit } from 'octokit';
 import type { AppConfig, DownloadOptions } from '../types.ts';
 
@@ -140,8 +140,9 @@ export async function downloadBlob(
   }
 
   const reader = response.body.getReader();
+  const decoder = new TextDecoder();
 
-  const chunks: Uint8Array[] = [];
+  let jsonText = '';
   let received = 0;
 
   while (true) {
@@ -149,19 +150,17 @@ export async function downloadBlob(
 
     if (done) break;
 
-    chunks.push(value);
     received += value.byteLength;
 
-    // Base64 expands data by ~33%
-    // Estimate decoded size from transport size
-    // Cap at 95% until fully decoded/written
+    jsonText += decoder.decode(value, { stream: true });
+
+    // Base64 transport overhead estimate
     const estimatedDecoded = Math.min(Math.floor(received * 0.75), Math.floor(fileSize * 0.95));
 
     onProgress(estimatedDecoded, fileSize);
   }
 
-  // Combine streamed JSON chunks
-  const jsonText = Buffer.concat(chunks).toString('utf8');
+  jsonText += decoder.decode();
 
   const json = JSON.parse(jsonText) as {
     content: string;
@@ -169,15 +168,27 @@ export async function downloadBlob(
     size: number;
   };
 
+  // Free JSON text memory ASAP
+  jsonText = '';
+
   if (json.encoding !== 'base64') {
     throw new Error(`Unexpected encoding: ${json.encoding}`);
   }
 
-  // GitHub inserts line breaks in base64 content
-  const buffer = Buffer.from(json.content.replace(/\n/g, ''), 'base64');
+  // Remove GitHub inserted line breaks
+  const base64 = json.content.replace(/\n/g, '');
 
-  await Bun.write(savePath, buffer);
+  // Free original JSON object content ASAP
+  json.content = '';
 
-  // Final accurate progress update
+  const buffer = Buffer.from(base64, 'base64');
+
+  await new Promise<void>((resolve, reject) => {
+    fs.writeFile(savePath, buffer, (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+
   onProgress(buffer.byteLength, buffer.byteLength);
 }
