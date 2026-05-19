@@ -13,6 +13,7 @@ export interface DownloadOptions {
   subtitles?: boolean;
   playlist?: boolean;
   sponsorblock?: boolean;
+  impersonate?: boolean;
 }
 
 export interface FileEntry {

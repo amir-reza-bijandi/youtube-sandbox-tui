@@ -8,6 +8,7 @@ export function buildCommitMessage(opts: DownloadOptions): string {
   if (opts.audioOnly) msg += ` audio-only: true`;
   if (opts.subtitles) msg += ` subtitles: true`;
   if (opts.playlist) msg += ` playlist: true`;
+  if (opts.impersonate) msg += ` impersonate: true`;
   if (opts.sponsorblock === false) msg += ` sponsorblock: false`;
   return msg;
 }

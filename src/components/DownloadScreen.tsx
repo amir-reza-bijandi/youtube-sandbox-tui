@@ -43,6 +43,7 @@ export default function DownloadScreen({
     { label: opts.audioOnly ? '✅ Audio only (MP3)' : '⬜ Audio only (MP3)', value: 'audioOnly' },
     { label: opts.subtitles ? '✅ Download subtitles' : '⬜ Download subtitles', value: 'subtitles' },
     { label: opts.playlist ? '✅ Full playlist' : '⬜ Full playlist', value: 'playlist' },
+    { label: opts.impersonate ? '✅ Impersonate' : '⬜ Impersonate', value: 'impersonate' },
     { label: '→  Continue', value: 'done' },
   ];
 
@@ -107,6 +108,7 @@ export default function DownloadScreen({
             {opts.audioOnly ? ' audio-only: true' : ''}
             {opts.subtitles ? ' subtitles: true' : ''}
             {opts.playlist ? ' playlist: true' : ''}
+            {opts.impersonate ? ' impersonate: true' : ''}
           </Text>
           <SelectInput
             items={[
